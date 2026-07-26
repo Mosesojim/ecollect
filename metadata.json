@@ -1,0 +1,6 @@
+{
+  "name": "ECOLLECT Dashboard",
+  "description": "Resident user's dashboard for waste management and pickup requests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
