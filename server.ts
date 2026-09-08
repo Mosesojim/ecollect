@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
 async function startServer() {
@@ -21,11 +22,29 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+    
+    // Explicit SPA fallback for development mode
+    app.use('*', async (req, res, next) => {
+      if (req.method !== 'GET') return next();
+      try {
+        const templatePath = path.resolve(process.cwd(), 'index.html');
+        if (fs.existsSync(templatePath)) {
+          let template = fs.readFileSync(templatePath, 'utf-8');
+          template = await vite.transformIndexHtml(req.originalUrl, template);
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+        } else {
+          next();
+        }
+      } catch (e) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
   } else {
     // Production serving
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.use((req, res, next) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
